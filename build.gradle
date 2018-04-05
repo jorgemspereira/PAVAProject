@@ -15,7 +15,7 @@ plugins {
 }
 
 // Define the main class for the application
-mainClassName = 'ist.meic.pa.GenericFunctions.App'
+mainClassName = 'ist.meic.pa.GenericFunctions.WithGenericFunctions'
 
 dependencies {
     // This dependency is found on compile classpath of this component and consumers.
@@ -33,4 +33,28 @@ repositories {
     // Use jcenter for resolving your dependencies.
     // You can declare any Maven/Ivy/file repository here.
     jcenter()
+}
+
+run {
+    // Redirects standardInput to a File named app.in
+    // Java's "System In" in will be obtained from this file.
+    // standardInput = new FileInputStream('app.in')
+
+    // Java's System in will be obtained from the console
+    standardInput = System.in
+
+    // Redirects console output to file app.out
+    // standardOutput = new FileOutputStream('app.out')
+
+    // If Arguments are static
+    // args = ["Hey", "You"]
+
+    // Pass args when running in console: gradle run -PappArgs="['arg1','arg2']"
+    if (project.hasProperty("appArgs")) {
+        // Equivalent to doing args = args + Eval.me(appArgs)
+        // args Eval.me(appArgs)
+
+        // Equivalent to args = Eval.me(appArgs)
+        args = Eval.me(appArgs)
+    }
 }
