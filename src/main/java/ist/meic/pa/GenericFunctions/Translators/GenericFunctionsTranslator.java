@@ -1,5 +1,6 @@
 package ist.meic.pa.GenericFunctions.Translators;
 
+import ist.meic.pa.GenericFunctions.Annotations.GenericFunction;
 import javassist.*;
 
 public class GenericFunctionsTranslator implements Translator {
@@ -19,6 +20,8 @@ public class GenericFunctionsTranslator implements Translator {
     }
 
     void todo(CtClass ctClass) throws NotFoundException, CannotCompileException, ClassNotFoundException {
-
+        if(ctClass.hasAnnotation(GenericFunction.class)) {
+            System.out.println(ctClass.getName());
+        }
     }
 }

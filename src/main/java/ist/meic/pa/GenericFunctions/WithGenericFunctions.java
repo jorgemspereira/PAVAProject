@@ -3,9 +3,13 @@ package ist.meic.pa.GenericFunctions;
 import ist.meic.pa.GenericFunctions.Translators.GenericFunctionsTranslator;
 import javassist.*;
 
+import javax.swing.plaf.synth.SynthOptionPaneUI;
+import java.sql.SQLOutput;
+
 public class WithGenericFunctions {
     public static void main(String[] args) {
-        if (args.length < 2) {
+        System.out.println(args[0]);
+        if (args.length < 1) {
             System.out.print("Usage java -cp genericFunctions.jar WithGenericFunctions ClassName");
         } else {
             try {
