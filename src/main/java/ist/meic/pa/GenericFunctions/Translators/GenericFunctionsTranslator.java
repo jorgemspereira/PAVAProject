@@ -13,8 +13,10 @@ public class GenericFunctionsTranslator implements Translator {
 
     @Override
     public void onLoad(ClassPool pool, String classname) throws NotFoundException, CannotCompileException {
+        System.out.println("-----" + classname);
+
         CtClass ctClass = pool.get(classname);
-        //ctClass.setModifiers(Modifier.PUBLIC);
+        ctClass.setModifiers(Modifier.PUBLIC);
         try {
             todo(ctClass, pool);
         } catch (ClassNotFoundException e) {
@@ -23,7 +25,7 @@ public class GenericFunctionsTranslator implements Translator {
     }
 
     void todo(CtClass ctClass, ClassPool pool) throws NotFoundException, CannotCompileException, ClassNotFoundException {
-        System.out.println("Im here");
+        System.out.println(ctClass.getName());
         if(ctClass.hasAnnotation(GenericFunction.class)) {
             // Get declared method
             CtMethod ctMethod = ctClass.getDeclaredMethods()[0];
@@ -38,19 +40,38 @@ public class GenericFunctionsTranslator implements Translator {
                 method.setName(method.getName() + "$original");
             }
 
-            CtClass klass = pool.get("java.lang.Object");
+            String newName = "public static Object " + "" + methodName + "(";
+            for(int i = 0; i < numArguments;i++)
+            {
+                if(i < numArguments - 1){
+                    newName += "Object a,";
+                }
+                else{
+                    newName += "Object b){}";
+                }
+            }
 
-            CtMethod m = new CtMethod(CtClass.voidType, methodName, new CtClass[] {CtClass.intType, CtClass.intType}, ctClass);
+            System.out.println(newName);
+            ctClass.addConstructor(CtNewConstructor.defaultConstructor(ctClass));
 
+            CtMethod m = CtNewMethod.make(newName, ctClass);
+            //CtMethod m = CtNewMethod.make("public Object mix(Object x, Object y) {")
             System.out.println(m.getLongName());
 
             m.setBody("{" +
                             "System.out.println(\"Hello\");" +
+                            "String a = \"abc\"" +
+                            "return ($r)a;" +
                             "}");
 
-            m.setModifiers(ctMethod.getModifiers());
             ctClass.addMethod(m);
-            System.out.println(m.getModifiers());
+
+            try {
+                ctClass.writeFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
         }
     }
 }
