@@ -2,6 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Desktop-PAVA_Project_main.iml" filepath="$PROJECT_DIR$/.idea/modules/Desktop-PAVA_Project_main.iml" group="PAVA_Project" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Desktop-PAVA_Project_test.iml" filepath="$PROJECT_DIR$/.idea/modules/Desktop-PAVA_Project_test.iml" group="PAVA_Project" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/PAVA_Project.iml" filepath="$PROJECT_DIR$/.idea/modules/PAVA_Project.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/PAVA_Project_main.iml" filepath="$PROJECT_DIR$/.idea/modules/PAVA_Project_main.iml" group="PAVA_Project" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/PAVA_Project_test.iml" filepath="$PROJECT_DIR$/.idea/modules/PAVA_Project_test.iml" group="PAVA_Project" />
