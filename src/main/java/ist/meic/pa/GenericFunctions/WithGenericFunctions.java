@@ -8,18 +8,16 @@ import java.sql.SQLOutput;
 
 public class WithGenericFunctions {
     public static void main(String[] args) {
-        System.out.println(args[0]);
         if (args.length < 1) {
-            System.out.print("Usage java -cp genericFunctions.jar WithGenericFunctions ClassName");
+            System.out.print("Usage java -cp genericFuncions.jar WithGenericFunctions ClassName");
         } else {
             try {
                 Translator translator = new GenericFunctionsTranslator();
                 ClassPool pool = ClassPool.getDefault();
+                pool.appendClassPath(new LoaderClassPath(Thread.currentThread().getContextClassLoader()));
                 Loader classLoader = new Loader();
                 classLoader.addTranslator(pool, translator);
-                String[] restArgs = new String[args.length - 1];
-                System.arraycopy(args, 1, restArgs, 0, restArgs.length);
-                classLoader.run(args[0], restArgs);
+                classLoader.run(args[0], null);
             } catch (Throwable e) {
                 e.printStackTrace();
             }

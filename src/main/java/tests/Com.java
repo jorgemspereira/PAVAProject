@@ -5,7 +5,7 @@ import ist.meic.pa.GenericFunctions.Annotations.GenericFunction;
 import java.util.Vector;
 
 @GenericFunction
-interface Com {
+public interface Com {
     public static Object bine(Object a, Object b) {
         Vector<Object> v = new Vector<Object>();
         v.add(a);
