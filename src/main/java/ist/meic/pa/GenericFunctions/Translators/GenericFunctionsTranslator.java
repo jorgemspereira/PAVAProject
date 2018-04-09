@@ -47,7 +47,7 @@ public class GenericFunctionsTranslator implements Translator {
             }
 
             printArray(methodsParamsBefore);
-            ArrayList <CtClass[]> orderedMethodsParams = sortArray(methodsParamsBefore);
+            //ArrayList <CtClass[]> orderedMethodsParams = sortArray(methodsParamsBefore);
             printArray(methodsParamsBefore);
 
 
@@ -67,8 +67,8 @@ public class GenericFunctionsTranslator implements Translator {
             }
 
             int count = ctMethod.getParameterTypes().length;
-            CtClass class1 = pool.get("java.lang.Object");
-            CtClass returnClass = pool.get("java.lang.Object");
+            CtClass class1 = pool.get("Color");
+            CtClass returnClass = pool.get("java.lang.String");
             CtClass[] args = new CtClass[count];
             Arrays.fill(args, class1);
 
@@ -87,22 +87,12 @@ public class GenericFunctionsTranslator implements Translator {
 
             String template = "{\n" +
                     "ist.meic.pa.GenericFunctions.Dispatcher dispatcher = new ist.meic.pa.GenericFunctions.Dispatcher();\n" +
-                    "return dispatcher.dispatch($args, \"" + className + "\",\"" + methodName + "\"," + argsTypes+");\n"+
+                    "return ($r)dispatcher.dispatch($args, \"" + className + "\",\"" + methodName + "\"," + argsTypes+");\n"+
                     "}\n";
 
             m.setBody(template);
 
-            /*ArrayList<CtClass[]> methodsParams = new ArrayList<>();
-            CtMethod [] methods = ctClass.getDeclaredMethods();
-            for(CtMethod method : methods)
-            {
-                CtClass [] parameters = method.getParameterTypes();
-                methodsParams.add(parameters);
-            }
 
-            ArrayList <CtClass[]> orderedMethodsParams = sortArray(methodsParams);
-
-            printArray(methodsParams);*/
 
 
             //pool.importPackage("java.util.ArrayList");
@@ -117,36 +107,7 @@ public class GenericFunctionsTranslator implements Translator {
         }
     }
 
-    public ArrayList<CtClass[]> sortArray(ArrayList<CtClass[]> array) throws ClassNotFoundException {
-        int n = array.size();
-        CtClass [] temp = null;
 
-        if(n == 0) {
-            return array;
-        }
-
-        //Para cada argumento
-        for(int k = (array.get(0).length - 1); k >= 0 ; k--) {
-            for(int i = 0 ; i < n - 1 ; i++){
-                for (int j = 0; j < (n-i-1); j ++) {
-                    Class c1 = Class.forName(array.get(j+1)[k].getName());
-                    Class c2 = Class.forName(array.get(j)[k].getName());
-
-                    if(!c1.getName().equals(c2.getName()))
-                    {
-                        if (!c1.isAssignableFrom(c2))
-                        {
-                            // Swap
-                            temp = array.get(j);
-                            array.set(j, array.get(j+1));
-                            array.set(j+1, temp);
-                        }
-                    }
-                }
-            }
-        }
-        return array;
-    }
 
     public void writeArray(ArrayList <CtClass []> array)
     {
