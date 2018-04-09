@@ -12,36 +12,15 @@ import java.util.List;
 
 public class Dispatcher {
 
-    public void a(Object b, Object c)
+    public static Object dispatch(Object [] objects, String className)
     {
-        System.out.println("aaaa");
-        System.out.println(b.getClass().getName());
-        System.out.println(c.getClass().getName());
-    }
-    public Object dispatch(Object [] objects, String className, String funcName, String [] arguments)
-    {
-        /*System.out.println("[Dispatch]");
+        System.out.println("[Dispatch]");
         System.out.println("--Objects");
         Arrays.asList(objects).forEach(x-> System.out.println(x));
+        /*
         System.out.println("--Class");
-        System.out.println(className);
-        System.out.println("--FuncName");
-        System.out.println(funcName);
-        System.out.println("--Arguments");
-        Arrays.asList(arguments).forEach(x-> System.out.println(x));*/
-
-        ArrayList<Class> argsClasses = new ArrayList<>();
-        for(Object obj : objects)
-        {
-            try {
-                argsClasses.add(Class.forName(obj.getClass().getName()));
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            }
-        }
-        Class [] classes = new Class[argsClasses.size()];
-        classes = argsClasses.toArray(classes);
-        System.out.println("[Classes]");
+        System.out.println(className);*/
+        //System.out.println("[Classes]");
         //Arrays.asList(classes).forEach(x-> System.out.println(x.getName()));
 
 
@@ -49,18 +28,21 @@ public class Dispatcher {
             Class invokableClass = Class.forName(className);
             ArrayList<Class[]> classArray = getParametersArray(invokableClass);
 
+            printArray(classArray);
+
             for(Class [] c : classArray) {
                 try {
 
-                    Method method = invokableClass.getDeclaredMethod(funcName+"$original", c);
+                    Method method = invokableClass.getDeclaredMethod(invokableClass.getDeclaredMethods()[0].getName(), c);
 
-                    System.out.println("INVOKING");
-                    //Arrays.asList(method.getParameterTypes()).forEach(x-> System.out.println(x.getName()));
+                    System.out.println("iasdisamdimsaidmisadmisa");
+                    Arrays.asList(method.getParameterTypes()).forEach(x-> System.out.println(x.getName()));
                     method.setAccessible(true);
                     return method.invoke(null, objects);
-                } catch (IllegalArgumentException|NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-                    //e.printStackTrace();
+                } catch (IllegalArgumentException e) {
                     continue;
+                } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                    e.printStackTrace();
                 }
             }
 
@@ -71,7 +53,7 @@ public class Dispatcher {
         return null;
     }
 
-    private ArrayList<Class[]> getParametersArray(Class c)
+    private static ArrayList<Class[]> getParametersArray(Class c)
     {
         ArrayList<Class[]> methodsParams = new ArrayList<>();
         Method[] methods = c.getDeclaredMethods();
@@ -90,7 +72,20 @@ public class Dispatcher {
         return null;
     }
 
-    public ArrayList<Class[]> sortArray(ArrayList<Class[]> array) throws ClassNotFoundException {
+    public static void printArray(ArrayList<Class[]> array)
+    {
+        for(int i = 0;i<array.size();i++)
+        {
+            for(Class c : array.get(i))
+            {
+                System.out.print(c.getName() + " ");
+            }
+            System.out.println();
+        }
+        System.out.println("-------");
+    }
+
+    public static ArrayList<Class[]> sortArray(ArrayList<Class[]> array) throws ClassNotFoundException {
         int n = array.size();
         Class [] temp = null;
 
