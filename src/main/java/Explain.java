@@ -1,9 +1,9 @@
-import ist.meic.pa.GenericFunctions.Annotations.AfterMethod;
-import ist.meic.pa.GenericFunctions.Annotations.BeforeMethod;
-import ist.meic.pa.GenericFunctions.Annotations.GenericFunction;
+import ist.meic.pa.GenericFunctions.AfterMethod;
+import ist.meic.pa.GenericFunctions.BeforeMethod;
+import ist.meic.pa.GenericFunctions.GenericFunction;
 
 @GenericFunction
-interface Explain {
+public interface Explain {
     public static void it(Integer i) {
         System.out.print(i + " is an integer");
     }

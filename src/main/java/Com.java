@@ -1,4 +1,4 @@
-import ist.meic.pa.GenericFunctions.Annotations.GenericFunction;
+import ist.meic.pa.GenericFunctions.GenericFunction;
 
 import java.util.Vector;
 

@@ -1,4 +1,4 @@
-import ist.meic.pa.GenericFunctions.Annotations.GenericFunction;
+import ist.meic.pa.GenericFunctions.GenericFunction;
 
 @GenericFunction
 public class Color {

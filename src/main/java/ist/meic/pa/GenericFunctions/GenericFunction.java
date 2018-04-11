@@ -1,4 +1,4 @@
-package ist.meic.pa.GenericFunctions.Annotations;
+package ist.meic.pa.GenericFunctions;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

@@ -47,7 +47,7 @@ run {
     // standardOutput = new FileOutputStream('app.out')
 
     // If Arguments are static
-    args = ["MainColor"]
+    args = ["MainExplain"]
 
     // Pass args when running in console: gradle run -PappArgs="['arg1','arg2']"
     if (project.hasProperty("appArgs")) {
