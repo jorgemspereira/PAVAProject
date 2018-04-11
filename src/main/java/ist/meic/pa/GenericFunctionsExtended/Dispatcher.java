@@ -1,4 +1,4 @@
-package ist.meic.pa.GenericFunctions;
+package ist.meic.pa.GenericFunctionsExtended;
 
 import javassist.NotFoundException;
 
@@ -6,15 +6,17 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Dispatcher {
+    static Map<Class[], Method[]> cachingMap = new HashMap<>();
 
     public static Object dispatch(Object [] objects, String className)
     {
         try {
             Class invokableClass = Class.forName(className);
             handleAnnotations(invokableClass, objects, 0);
-
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (NotFoundException e) {
@@ -27,18 +29,16 @@ public class Dispatcher {
             Class invokableClass = Class.forName(className);
 
             ArrayList<Class[]> classArray = getParametersArray(invokableClass);
-            classArray.forEach(x-> System.out.println(x[0].getName() + " " + x[1].getName() + " "+x[2].getName()));
+            System.out.println("aoskdskdoskdos");
+            classArray.forEach(x-> System.out.println(x[0].getName() + " " + x[1].getName()));
 
             for(Class [] c : classArray) {
                 try {
 
                     Method method = invokableClass.getDeclaredMethod(invokableClass.getDeclaredMethods()[0].getName(), c);
                     method.setAccessible(true);
-                    if(method.getAnnotation(BeforeMethod.class)==null && method.getAnnotation(AfterMethod.class)==null)
-                    {
-                        toReturn = method.invoke(null, objects);
-                        break;
-                    }
+                    toReturn = method.invoke(null, objects);
+                    break;
                 } catch (IllegalArgumentException e) {
                     continue;
                 } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
@@ -149,4 +149,5 @@ public class Dispatcher {
         }
         return array;
     }
+
 }

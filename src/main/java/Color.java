@@ -33,3 +33,7 @@ class Blue extends Color {
 
 class Yellow extends Color {
 }
+
+interface Drawable {
+
+}
