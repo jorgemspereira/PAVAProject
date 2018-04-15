@@ -8,139 +8,125 @@ import java.util.List;
 
 public class Dispatcher {
 
-    private static List<Class[]> sortedBefore = new ArrayList<>();
-    private static List<Class[]> sortedAfter = new ArrayList<>();
-    private static List<Class[]> sortedMain = new ArrayList<>();
-
     public static Object dispatch(Object [] objects, String className) {
 
         Object toReturn =  null;
 
         try {
             Class invokableClass = Class.forName(className);
-            handleAnnotations(invokableClass, objects, 0);
+            handleBefore(invokableClass, objects);
             toReturn = handleMainMethods(invokableClass, objects);
-            handleAnnotations(invokableClass, objects, 1);
-        } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException
-                | InvocationTargetException e) {
+            handleAfter(invokableClass, objects);
+        } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
 
         return toReturn;
     }
 
-    private static Object handleMainMethods(Class invokableClass, Object[] objects) throws NoSuchMethodException,
-            InvocationTargetException, IllegalAccessException {
-
-        Class[] arguments = getClassesOfObjects(objects);
-        List<Class[]> classArray;
-
-        if (sortedMain.size() == 0) {
-            classArray = getParametersArray(invokableClass);
-            sortedMain = classArray;
-        } else {
-            classArray = sortedMain;
-        }
-
-        Object toReturn = null;
-
-        for(Class [] c : classArray) {
-
-            Method method = invokableClass.getDeclaredMethod(invokableClass.getDeclaredMethods()[0].getName(), c);
-            method.setAccessible(true);
-            if(method.getAnnotation(BeforeMethod.class) == null && method.getAnnotation(AfterMethod.class) == null) {
-                if(verifyCallable(c, arguments)) {
-                    toReturn = method.invoke(null, objects);
-                    break;
-                }
-            }
-        }
-
-        return toReturn;
-    }
-
-    private static Class[] getClassesOfObjects(Object[] objs) {
+    private static Class[] getClassesOfObjects(Object[] objects) {
         List<Class> classes = new ArrayList<>();
-        for(Object o : objs) {
+        for(Object o : objects) {
             classes.add(o.getClass());
         }
         Class[] toReturn = new Class[classes.size()];
         return classes.toArray(toReturn);
     }
 
-    private static boolean verifyCallable(Class[] method, Class[] args) {
-        for(int i = 0; i < method.length; i++) {
-            if(!method[i].isAssignableFrom(args[i])) {
+    private static List<Class[]> getParametersArray(List<Method> methods) {
+        ArrayList<Class[]> methodsParams = new ArrayList<>();
+        for(Method method : methods) {
+            Class[] parameters = method.getParameterTypes();
+            methodsParams.add(parameters);
+        }
+        return methodsParams;
+    }
+
+    private static boolean isCallable(Method m, Class[] args) {
+        if(m.getParameterTypes().length != args.length) {
+            return false;
+        }
+
+        for (int i = 0; i < m.getParameterTypes().length; i++) {
+            if (!m.getParameterTypes()[i].isAssignableFrom(args[i])) {
                 return false;
             }
         }
         return true;
     }
 
-    private static List<Class[]> getAnnotatedMethods(Class c, Class annotation) {
-        ArrayList<Class[]> methodsParams = new ArrayList<>();
-        for(Method method : c.getDeclaredMethods()) {
-            if(method.getAnnotation(annotation) != null) {
-                Class [] parameters = method.getParameterTypes();
-                methodsParams.add(parameters);
+    private static List<Method> getCallableMethods(Class c, Class[] args) {
+        List<Method> toReturn = new ArrayList<>();
+        for (Method m : c.getDeclaredMethods()) {
+            if (m.getAnnotation(BeforeMethod.class) == null && m.getAnnotation(AfterMethod.class) == null) {
+                if (isCallable(m, args)) {
+                    toReturn.add(m);
+                }
             }
         }
-        return methodsParams;
+        return toReturn;
     }
 
-    private static void handleAnnotations(Class c, Object [] objects, int type)  {
-        if(c.getAnnotation(GenericFunction.class) != null) {
-
-            Class annotation = (type == 0) ? BeforeMethod.class: AfterMethod.class;
-            List<Class[]> methodsParams = getAnnotatedMethods(c, annotation);
-            List<Class[]> orderedParams;
-
-            if(type==1) {
-                if (sortedBefore.size() == 0) {
-                    orderedParams = sortArray(methodsParams);
-                    Collections.reverse(orderedParams);
-                    sortedBefore = orderedParams;
-                } else {
-                    orderedParams = sortedBefore;
-                }
-            } else {
-                if (sortedAfter.size() == 0) {
-                    orderedParams = sortArray(methodsParams);
-                    sortedAfter = orderedParams;
-                } else {
-                    orderedParams = sortedAfter;
+    private static List<Method> getAnnotatedCallableMethods(Class c, Class[] args, Class annotation) {
+        List<Method> toReturn = new ArrayList<>();
+        for (Method m : c.getDeclaredMethods()) {
+            if (m.getAnnotation(annotation) != null) {
+                if (isCallable(m, args)) {
+                    toReturn.add(m);
                 }
             }
+        }
+        return toReturn;
+    }
 
-            Class[] arguments = getClassesOfObjects(objects);
+    private static Object handleMainMethods(Class c, Object[] objects)  {
+        Class[] arguments = getClassesOfObjects(objects);
+        List<Method> methods = getCallableMethods(c, arguments);
+        if(methods.size() == 0) { return null; }
+        List<Class[]> methodsParams = getParametersArray(methods);
+        List<Class[]> orderedParams = sortArray(methodsParams);
+        return callMethod(c, orderedParams, objects);
+    }
 
-            for(Class[] params : orderedParams)
-            {
-                try {
-                    Method method = c.getDeclaredMethod(c.getDeclaredMethods()[0].getName(), params);
-                    //FIXME Methods from super class
-                    if(verifyCallable(params, arguments)) {
-                        method.setAccessible(true);
-                        method.invoke(null, objects);
-                    }
-                } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-                    e.printStackTrace();
-                }
+    private static void handleBefore(Class c, Object [] objects) {
+        Class[] arguments = getClassesOfObjects(objects);
+        List<Method> methods = getAnnotatedCallableMethods(c, arguments, BeforeMethod.class);
+        List<Class[]> methodsParams = getParametersArray(methods);
+        List<Class[]> orderedParams = sortArray(methodsParams);
+        callMethods(c, orderedParams, objects);
+    }
+
+    private static void handleAfter(Class c, Object [] objects) {
+        Class[] arguments = getClassesOfObjects(objects);
+        List<Method> methods = getAnnotatedCallableMethods(c, arguments, AfterMethod.class);
+        List<Class[]> methodsParams = getParametersArray(methods);
+        List<Class[]> orderedParams = sortArray(methodsParams);
+        Collections.reverse(orderedParams);
+        callMethods(c, orderedParams, objects);
+    }
+
+    private static void callMethods(Class c, List<Class[]> orderedParams, Object [] objects)  {
+        for(Class[] params : orderedParams) {
+            try {
+                Method method = c.getDeclaredMethod(c.getDeclaredMethods()[0].getName(), params);
+                method.setAccessible(true);
+                method.invoke(null, objects);
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                e.printStackTrace();
             }
         }
     }
 
-    private static List<Class[]> getParametersArray(Class c)
-    {
-        ArrayList<Class[]> methodsParams = new ArrayList<>();
-        Method[] methods = c.getDeclaredMethods();
-        for(Method method : methods)
-        {
-            Class [] parameters = method.getParameterTypes();
-            methodsParams.add(parameters);
+    private static Object callMethod(Class c, List<Class[]> orderedParams, Object [] objects){
+        try {
+            Method method = c.getDeclaredMethod(c.getDeclaredMethods()[0].getName(), orderedParams.get(0));
+            method.setAccessible(true);
+            return method.invoke(null, objects);
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            e.printStackTrace();
         }
 
-        return sortArray(methodsParams);
+        return null;
     }
 
     private static List<Class[]> sortArray(List<Class[]> array) {
