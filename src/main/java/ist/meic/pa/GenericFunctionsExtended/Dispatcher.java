@@ -1,153 +1,228 @@
 package ist.meic.pa.GenericFunctionsExtended;
 
-import javassist.NotFoundException;
-
+import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class Dispatcher {
-    static Map<Class[], Method[]> cachingMap = new HashMap<>();
 
-    public static Object dispatch(Object [] objects, String className)
-    {
-        try {
-            Class invokableClass = Class.forName(className);
-            handleAnnotations(invokableClass, objects, 0);
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (NotFoundException e) {
-            e.printStackTrace();
-        }
 
-        Object toReturn = null;
+    public static Object dispatch(Object [] objects, String className) {
+
+        Object toReturn =  null;
 
         try {
+            getClassesOfObjects(objects);
+
             Class invokableClass = Class.forName(className);
-
-            ArrayList<Class[]> classArray = getParametersArray(invokableClass);
-            System.out.println("aoskdskdoskdos");
-            classArray.forEach(x-> System.out.println(x[0].getName() + " " + x[1].getName()));
-
-            for(Class [] c : classArray) {
-                try {
-
-                    Method method = invokableClass.getDeclaredMethod(invokableClass.getDeclaredMethods()[0].getName(), c);
-                    method.setAccessible(true);
-                    toReturn = method.invoke(null, objects);
-                    break;
-                } catch (IllegalArgumentException e) {
-                    continue;
-                } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-                    e.printStackTrace();
-                }
-            }
-
+            handleBefore(invokableClass, objects);
+            toReturn = handleMainMethods(invokableClass, objects);
+            handleAfter(invokableClass, objects);
 
         } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-
-        try {
-            Class invokableClass = Class.forName(className);
-            handleAnnotations(invokableClass, objects, 1);
-
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (NotFoundException e) {
             e.printStackTrace();
         }
 
         return toReturn;
     }
 
-    static void handleAnnotations(Class c, Object [] objects, int type) throws NotFoundException, ClassNotFoundException {
-        if(c.getAnnotation(GenericFunction.class) != null)
-        {
-            ArrayList<Class[]> methodsParams = new ArrayList<>();
-
-            Class annotation = (type == 0) ? BeforeMethod.class: AfterMethod.class;
-
-            for(Method method : c.getDeclaredMethods())
-            {
-                if(method.getAnnotation(annotation)!=null)
-                {
-                    Class [] parameters = method.getParameterTypes();
-                    methodsParams.add(parameters);
-                }
-            }
-
-            // Sort the arrays according to specificity
-            ArrayList <Class[]> orderedParams = sortArray(methodsParams);
-            if(type==1){Collections.reverse(orderedParams);}
-
-            for(Class[] params : orderedParams)
-            {
-                Method method = null;
-                try {
-                    method = c.getDeclaredMethod(c.getDeclaredMethods()[0].getName(), params);
-                    method.setAccessible(true);
-                    method.invoke(null, objects);
-
-                } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-                    e.printStackTrace();
-                } catch(IllegalArgumentException e)
-                {
-                    continue;
-                }
-            }
+    private static Class[] getClassesOfObjects(Object[] objects) {
+        List<Class> classes = new ArrayList<>();
+        for(Object o : objects) {
+            classes.add(o.getClass());
         }
+        Class[] toReturn = new Class[classes.size()];
+        return classes.toArray(toReturn);
     }
 
-    private static ArrayList<Class[]> getParametersArray(Class c)
-    {
+    private static List<Class[]> getParametersArray(List<Method> methods) {
         ArrayList<Class[]> methodsParams = new ArrayList<>();
-        Method[] methods = c.getDeclaredMethods();
-        for(Method method : methods)
-        {
-            Class [] parameters = method.getParameterTypes();
+        for(Method method : methods) {
+            Class[] parameters = method.getParameterTypes();
             methodsParams.add(parameters);
         }
-
-        return sortArray(methodsParams);
+        return methodsParams;
     }
 
-    public static ArrayList<Class[]> sortArray(ArrayList<Class[]> array) {
-        int n = array.size();
-        Class [] temp = null;
-
-        if(n == 0) {
-            return array;
+    private static boolean isCallable(Method m, Class[] args) {
+        if(m.getParameterTypes().length != args.length) {
+            return false;
         }
 
-        for(int k = (array.get(0).length - 1); k >= 0 ; k--) {
-            for(int i = 0 ; i < n - 1 ; i++){
-                for (int j = 0; j < (n-i-1); j ++) {
-                    try {
-                        Class c1 = Class.forName(array.get(j+1)[k].getName());
-                        Class c2 = Class.forName(array.get(j)[k].getName());
+        for (int i = 0; i < m.getParameterTypes().length; i++) {
+            if (!m.getParameterTypes()[i].isAssignableFrom(args[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
 
-                        if(!c1.getName().equals(c2.getName()))
-                        {
-                            if (!c1.isAssignableFrom(c2))
-                            {
-                                // Swap
-                                temp = array.get(j);
-                                array.set(j, array.get(j+1));
-                                array.set(j+1, temp);
-                            }
-                        }
-                    } catch (ClassNotFoundException e) {
-                        e.printStackTrace();
+    private static List<Method> getCallableMethods(Class c, Class[] args) {
+        List<Method> toReturn = new ArrayList<>();
+        for (Method m : c.getDeclaredMethods()) {
+            if (m.getAnnotation(BeforeMethod.class) == null && m.getAnnotation(AfterMethod.class) == null) {
+                if (isCallable(m, args)) {
+                    toReturn.add(m);
+                }
+            }
+        }
+        return toReturn;
+    }
+
+    private static List<Method> getAnnotatedCallableMethods(Class c, Class[] args, Class annotation) {
+        List<Method> toReturn = new ArrayList<>();
+        for (Method m : c.getDeclaredMethods()) {
+            if (m.getAnnotation(annotation) != null) {
+                if (isCallable(m, args)) {
+                    toReturn.add(m);
+                }
+            }
+        }
+        return toReturn;
+    }
+
+    private static Object handleMainMethods(Class c, Object[] objects)  {
+        Class[] arguments = getClassesOfObjects(objects);
+        List<Method> methods = getCallableMethods(c, arguments);
+        if(methods.size() == 0) { return null; } //FIXME
+        List<Class[]> methodsParams = getParametersArray(methods);
+        List<Class[]> orderedParams = sortArray(methodsParams, arguments);
+        return callMethod(c, orderedParams, objects, arguments);
+    }
+
+    private static void handleBefore(Class c, Object [] objects) {
+        Class[] arguments = getClassesOfObjects(objects);
+        List<Method> methods = getAnnotatedCallableMethods(c, arguments, BeforeMethod.class);
+        List<Class[]> methodsParams = getParametersArray(methods);
+        List<Class[]> orderedParams = sortArray(methodsParams, arguments);
+        callMethods(c, orderedParams, objects, arguments);
+    }
+
+    private static void handleAfter(Class c, Object [] objects) {
+        Class[] arguments = getClassesOfObjects(objects);
+        List<Method> methods = getAnnotatedCallableMethods(c, arguments, AfterMethod.class);
+        List<Class[]> methodsParams = getParametersArray(methods);
+        List<Class[]> orderedParams = sortArray(methodsParams, arguments);
+        Collections.reverse(orderedParams);
+        callMethods(c, orderedParams, objects, arguments);
+    }
+
+    private static void callMethods(Class c, List<Class[]> orderedParams, Object[] objects, Class[] arguments)  {
+        for(Class[] params : orderedParams) {
+            try {
+                Method method = c.getDeclaredMethod(c.getDeclaredMethods()[0].getName(), params); //FIXME
+                method.setAccessible(true);
+                method.invoke(null, objects);
+                insertOnCache(arguments, method);
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private static Object callMethod(Class c, List<Class[]> orderedParams, Object[] objects, Class[] arguments){
+        try {
+            Method method = c.getDeclaredMethod(c.getDeclaredMethods()[0].getName(), orderedParams.get(0)); //FIXME
+            method.setAccessible(true);
+            Object toReturn = method.invoke(null, objects);
+            insertOnCache(arguments, method);
+            return toReturn;
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    private static void insertOnCache(Class[] arguments, Method method){
+        if(cache.get(arguments) == null) {
+            ArrayList<Method> methods = new ArrayList<>();
+            methods.add(method);
+            cache.put(arguments, methods);
+        }else{
+            cache.get(arguments).add(method);
+        }
+    }
+
+    private static int indexOf(Class [] objects, Class object)
+    {
+        for(int i = 0;i<objects.length;i++)
+        {
+            if(object.getName().equals(objects[i].getName()))
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private static List<Class[]> sortArray2(List<Class[]> array, Class[] objects) throws ClassNotFoundException {
+        int n = array.size();
+
+        Class [] temp = null;
+
+        for (int k = (array.get(0).length - 1); k >= 0; k--) {
+            for (int i = 0; i < n - 1; i++) {
+                for (int j = 0; j < (n - i - 1); j++) {
+                    Class[] interfaces = objects[k].getInterfaces();
+
+                    Class c1 = Class.forName(array.get(j + 1)[k].getName());
+                    Class c2 = Class.forName(array.get(j)[k].getName());
+
+                    int c1Index = indexOf(interfaces, c1);
+                    int c2Index = indexOf(interfaces, c2);
+
+                    if (c1Index == -1 || c2Index == -1) {
+                        continue;
+                    }
+
+                    if (c1Index < c2Index) {
+                        // Swap
+                        temp = array.get(j);
+                        array.set(j, array.get(j + 1));
+                        array.set(j + 1, temp);
                     }
                 }
-
             }
         }
         return array;
     }
 
+    private static List<Class[]> sortArray(List<Class[]> array, Class[] objects) {
+        int n = array.size();
+        Class [] temp = null;
+        if(n == 0) {
+            return array;
+        }
+
+        try {
+            for (int k = (array.get(0).length - 1); k >= 0; k--) {
+                for (int i = 0; i < n - 1; i++) {
+                    for (int j = 0; j < (n - i - 1); j++) {
+                        Class c1 = Class.forName(array.get(j + 1)[k].getName());
+                        Class c2 = Class.forName(array.get(j)[k].getName());
+
+                        if (!c1.isAssignableFrom(c2)) {
+                            // Swap
+                            temp = array.get(j);
+                            array.set(j, array.get(j + 1));
+                            array.set(j + 1, temp);
+                        }
+
+                    }
+                }
+            }
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
+
+        try {
+            return sortArray2(array, objects);
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }
