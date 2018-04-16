@@ -57,7 +57,7 @@ public class Dispatcher {
 
     private static List<Method> getCallableMethods(Class c, Class[] args) {
         List<Method> toReturn = new ArrayList<>();
-        for (Method m : c.getDeclaredMethods()) {
+        for (Method m : c.getMethods()) {
             if (m.getAnnotation(BeforeMethod.class) == null && m.getAnnotation(AfterMethod.class) == null) {
                 if (isCallable(m, args)) {
                     toReturn.add(m);
@@ -69,7 +69,7 @@ public class Dispatcher {
 
     private static List<Method> getAnnotatedCallableMethods(Class c, Class[] args, Class annotation) {
         List<Method> toReturn = new ArrayList<>();
-        for (Method m : c.getDeclaredMethods()) {
+        for (Method m : c.getMethods()) {
             if (m.getAnnotation(annotation) != null) {
                 if (isCallable(m, args)) {
                     toReturn.add(m);
@@ -82,7 +82,7 @@ public class Dispatcher {
     private static Object handleMainMethods(Class c, Object[] objects)  {
         Class[] arguments = getClassesOfObjects(objects);
         List<Method> methods = getCallableMethods(c, arguments);
-        if(methods.size() == 0) { return null; }
+        if(methods.size() == 0) { return null; } //FIXME
         List<Class[]> methodsParams = getParametersArray(methods);
         List<Class[]> orderedParams = sortArray(methodsParams);
         return callMethod(c, orderedParams, objects);
@@ -108,7 +108,7 @@ public class Dispatcher {
     private static void callMethods(Class c, List<Class[]> orderedParams, Object [] objects)  {
         for(Class[] params : orderedParams) {
             try {
-                Method method = c.getDeclaredMethod(c.getDeclaredMethods()[0].getName(), params);
+                Method method = c.getMethod(c.getDeclaredMethods()[0].getName(), params); //FIXME
                 method.setAccessible(true);
                 method.invoke(null, objects);
             } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
@@ -119,7 +119,7 @@ public class Dispatcher {
 
     private static Object callMethod(Class c, List<Class[]> orderedParams, Object [] objects){
         try {
-            Method method = c.getDeclaredMethod(c.getDeclaredMethods()[0].getName(), orderedParams.get(0));
+            Method method = c.getMethod(c.getDeclaredMethods()[0].getName(), orderedParams.get(0)); //FIXME
             method.setAccessible(true);
             return method.invoke(null, objects);
         } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
