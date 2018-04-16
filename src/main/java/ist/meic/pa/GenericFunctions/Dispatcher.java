@@ -14,9 +14,11 @@ public class Dispatcher {
 
         try {
             Class invokableClass = Class.forName(className);
-            handleBefore(invokableClass, objects);
-            toReturn = handleMainMethods(invokableClass, objects);
-            handleAfter(invokableClass, objects);
+            if (getCallableMethods(invokableClass, getClassesOfObjects(objects)).size() != 0) {
+                handleBefore(invokableClass, objects);
+                toReturn = handleMainMethods(invokableClass, objects);
+                handleAfter(invokableClass, objects);
+            }
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
@@ -82,7 +84,6 @@ public class Dispatcher {
     private static Object handleMainMethods(Class c, Object[] objects)  {
         Class[] arguments = getClassesOfObjects(objects);
         List<Method> methods = getCallableMethods(c, arguments);
-        if(methods.size() == 0) { return null; } //FIXME
         List<Class[]> methodsParams = getParametersArray(methods);
         List<Class[]> orderedParams = sortArray(methodsParams, arguments);
         return callMethod(c, orderedParams, objects);

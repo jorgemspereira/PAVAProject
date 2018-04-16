@@ -136,13 +136,13 @@ public class Dispatcher {
     }
 
     private static void insertOnCache(Class[] arguments, Method method){
-        if(cache.get(arguments) == null) {
+       /* if(cache.get(arguments) == null) {
             ArrayList<Method> methods = new ArrayList<>();
             methods.add(method);
             cache.put(arguments, methods);
         }else{
             cache.get(arguments).add(method);
-        }
+        } */
     }
 
     private static int indexOf(Class [] objects, Class object)
