@@ -15,7 +15,7 @@ plugins {
 }
 
 // Define the main class for the application
-mainClassName = 'ist.meic.pa.GenericFunctions.WithGenericFunctions'
+mainClassName = 'ist.meic.pa.GenericFunctionsExtended.WithGenericFunctions'
 
 dependencies {
     // This dependency is found on compile classpath of this component and consumers.

@@ -7,21 +7,69 @@ import java.util.*;
 
 public class Dispatcher {
 
+    private static Map<Class[], ArrayList<Method>> beforeMethod = new HashMap<>();
+    private static Map<Class[], Method> mainMethod = new HashMap<>();
+    private static Map<Class[], ArrayList<Method>> afterMethod = new HashMap<>();
+
+    private enum Types { BEFORE, MAIN, AFTER }
 
     public static Object dispatch(Object [] objects, String className) {
 
         Object toReturn =  null;
 
         try {
-            getClassesOfObjects(objects);
-
+            System.out.println("ola");
             Class invokableClass = Class.forName(className);
-            handleBefore(invokableClass, objects);
-            toReturn = handleMainMethods(invokableClass, objects);
-            handleAfter(invokableClass, objects);
-
+            Class[] args = getClassesOfObjects(objects);
+            Object toReturnCache = verifyCache(args, objects);
+            if(toReturnCache != null) {
+                System.out.println("ola");
+                return toReturnCache;
+            }
+            if (getCallableMethods(invokableClass, args).size() != 0) {
+                handleBefore(invokableClass, objects);
+                toReturn = handleMainMethods(invokableClass, objects);
+                handleAfter(invokableClass, objects);
+            }
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
+        }
+
+        return toReturn;
+    }
+
+    private static Object verifyCache(Class[] args, Object[] objects) {
+
+        if(mainMethod.get(args) == null){
+            return null;
+        }
+
+        Object toReturn = null;
+
+        for(Method method : beforeMethod.get(args)) {
+            try {
+                method.setAccessible(true);
+                method.invoke(null, objects);
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                e.printStackTrace();
+            }
+        }
+
+        try {
+            Method m = mainMethod.get(args);
+            m.setAccessible(true);
+            toReturn = m.invoke(null, objects);
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            e.printStackTrace();
+        }
+
+        for(Method method : afterMethod.get(args)) {
+            try {
+                method.setAccessible(true);
+                method.invoke(null, objects);
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                e.printStackTrace();
+            }
         }
 
         return toReturn;
@@ -96,7 +144,7 @@ public class Dispatcher {
         List<Method> methods = getAnnotatedCallableMethods(c, arguments, BeforeMethod.class);
         List<Class[]> methodsParams = getParametersArray(methods);
         List<Class[]> orderedParams = sortArray(methodsParams, arguments);
-        callMethods(c, orderedParams, objects, arguments);
+        callMethods(c, orderedParams, objects, arguments, Types.BEFORE);
     }
 
     private static void handleAfter(Class c, Object [] objects) {
@@ -105,16 +153,16 @@ public class Dispatcher {
         List<Class[]> methodsParams = getParametersArray(methods);
         List<Class[]> orderedParams = sortArray(methodsParams, arguments);
         Collections.reverse(orderedParams);
-        callMethods(c, orderedParams, objects, arguments);
+        callMethods(c, orderedParams, objects, arguments, Types.AFTER);
     }
 
-    private static void callMethods(Class c, List<Class[]> orderedParams, Object[] objects, Class[] arguments)  {
+    private static void callMethods(Class c, List<Class[]> orderedParams, Object[] objects, Class[] arguments, Types type)  {
         for(Class[] params : orderedParams) {
             try {
                 Method method = c.getDeclaredMethod(c.getDeclaredMethods()[0].getName(), params); //FIXME
                 method.setAccessible(true);
                 method.invoke(null, objects);
-                insertOnCache(arguments, method);
+                insertOnCache(arguments, method, type);
             } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
                 e.printStackTrace();
             }
@@ -126,7 +174,7 @@ public class Dispatcher {
             Method method = c.getDeclaredMethod(c.getDeclaredMethods()[0].getName(), orderedParams.get(0)); //FIXME
             method.setAccessible(true);
             Object toReturn = method.invoke(null, objects);
-            insertOnCache(arguments, method);
+            insertOnCache(arguments, method, Types.MAIN);
             return toReturn;
         } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
             e.printStackTrace();
@@ -135,14 +183,31 @@ public class Dispatcher {
         return null;
     }
 
-    private static void insertOnCache(Class[] arguments, Method method){
-       /* if(cache.get(arguments) == null) {
-            ArrayList<Method> methods = new ArrayList<>();
-            methods.add(method);
-            cache.put(arguments, methods);
-        }else{
-            cache.get(arguments).add(method);
-        } */
+    private static void insertOnCache(Class[] arguments, Method method, Types type){
+        switch (type) {
+            case MAIN:
+                mainMethod.put(arguments, method);
+                return;
+            case BEFORE:
+                if(beforeMethod.get(arguments) == null) {
+                    ArrayList<Method> t = new ArrayList<>();
+                    t.add(method);
+                    beforeMethod.put(arguments, t);
+                } else {
+                    ArrayList<Method> before = beforeMethod.get(arguments);
+                    before.add(method);
+                }
+                return;
+            case AFTER:
+                if(afterMethod.get(arguments) == null) {
+                    ArrayList<Method> t = new ArrayList<>();
+                    t.add(method);
+                    afterMethod.put(arguments, t);
+                } else {
+                    ArrayList<Method> before = afterMethod.get(arguments);
+                    before.add(method);
+                }
+        }
     }
 
     private static int indexOf(Class [] objects, Class object)
