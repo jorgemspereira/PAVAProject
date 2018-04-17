@@ -1,8 +1,5 @@
-package pa.tests.domain;
+import ist.meic.pa.GenericFunctionsExtended.*;
 
-import ist.meic.pa.GenericFunctions.AfterMethod;
-import ist.meic.pa.GenericFunctions.BeforeMethod;
-import ist.meic.pa.GenericFunctions.GenericFunction;
 
 @GenericFunction
 public interface Explain {
@@ -18,7 +15,7 @@ public interface Explain {
 
     @BeforeMethod
     public static void it(Number n) {
-        System.out.print("The number");
+        System.out.print("The number ");
     }
 
     @AfterMethod
