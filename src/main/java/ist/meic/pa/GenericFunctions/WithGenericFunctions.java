@@ -5,7 +5,7 @@ import javassist.*;
 public class WithGenericFunctions {
     public static void main(String[] args) {
         if (args.length < 1) {
-            System.out.print("Usage java -cp genericFuncions.jar WithGenericFunctions ClassName");
+            System.out.print("Usage java -cp ./genericFunctions.jar:./javassist.jar:. ist.meic.pa.GenericFunctions.WithGenericFunctions ClassName");
         } else {
             try {
                 Translator translator = new GenericFunctionsTranslator();
