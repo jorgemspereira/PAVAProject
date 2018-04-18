@@ -1,12 +1,15 @@
 package ist.meic.pa.GenericFunctionsExtended;
 
+import ist.meic.pa.GenericFunctions.AfterMethod;
+import ist.meic.pa.GenericFunctions.BeforeMethod;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 
 public class Dispatcher {
 
-    private static Map<Integer, ArrayList<ArrayList<Method>>> cache = new HashMap<>();
+    private static Map<Integer, List<List<Method>>> cache = new HashMap<>();
 
     private enum Type {
         BEFORE,
@@ -27,9 +30,13 @@ public class Dispatcher {
                 return fromCache.getKey();
             }
 
-            if (getCallableMethods(invokableClass, args).size() != 0) {
+            Class[] arguments = getClassesOfObjects(objects);
+            List<Method> methods = getCallableMethods(invokableClass, arguments);
+            List<Method> orderedMethods = sortArray(invokableClass, methods, arguments);
+
+            if (methods.size() != 0) {
                 handleBefore(invokableClass, objects);
-                toReturn = handleMainMethods(invokableClass, objects);
+                toReturn = handleMainMethods(orderedMethods, args, objects);
                 handleAfter(invokableClass, objects);
             }
         } catch (ClassNotFoundException e) {
@@ -94,34 +101,27 @@ public class Dispatcher {
         return toReturn;
     }
 
-    private static Object handleMainMethods(Class c, Object[] objects)  {
-        Class[] arguments = getClassesOfObjects(objects);
-        List<Method> methods = getCallableMethods(c, arguments);
-        List<Class[]> methodsParams = getParametersArray(methods);
-        List<Class[]> orderedParams = sortArray(methodsParams, arguments);
-        return callMethod(c, orderedParams, arguments, objects, Type.MAIN);
+    private static Object handleMainMethods(List<Method> orderedParams, Class[] arguments, Object[] objects)  {
+        return callMethod(orderedParams, arguments, objects, Type.MAIN);
     }
 
     private static void handleBefore(Class c, Object [] objects) {
         Class[] arguments = getClassesOfObjects(objects);
         List<Method> methods = getAnnotatedCallableMethods(c, arguments, BeforeMethod.class);
-        List<Class[]> methodsParams = getParametersArray(methods);
-        List<Class[]> orderedParams = sortArray(methodsParams, arguments);
-        callMethods(c, orderedParams, arguments, objects, Type.BEFORE);
+        List<Method> orderedParams = sortArray(c, methods, arguments);
+        callMethods(orderedParams, arguments, objects, Type.BEFORE);
     }
 
     private static void handleAfter(Class c, Object [] objects) {
         Class[] arguments = getClassesOfObjects(objects);
         List<Method> methods = getAnnotatedCallableMethods(c, arguments, AfterMethod.class);
-        List<Class[]> methodsParams = getParametersArray(methods);
-        List<Class[]> orderedParams = sortArray(methodsParams, arguments);
+        List<Method> orderedParams = sortArray(c, methods, arguments);
         Collections.reverse(orderedParams);
-        callMethods(c, orderedParams, arguments, objects, Type.AFTER);
+        callMethods(orderedParams, arguments, objects, Type.AFTER);
     }
-
     private static void initCache(Class[] args) {
         if (cache.get(Arrays.hashCode(args)) == null) {
-            ArrayList<ArrayList<Method>> m = new ArrayList<>();
+            List<List<Method>> m = new ArrayList<>();
             m.add(new ArrayList<>());
             m.add(new ArrayList<>());
             m.add(new ArrayList<>());
@@ -129,11 +129,11 @@ public class Dispatcher {
         }
     }
 
-    private static Object callFromCache(ArrayList<Method> methods, Object[] objects) {
+    private static Object callFromCache(List<Method> methods, Object[] objects) {
         Object toReturn = null;
         for(Method method : methods) {
             try {
-                method.setAccessible(true);
+                //method.setAccessible(true);
                 toReturn = method.invoke(null, objects);
             } catch (IllegalAccessException | InvocationTargetException e) {
                 e.printStackTrace();
@@ -148,7 +148,7 @@ public class Dispatcher {
             return new AbstractMap.SimpleEntry<>(null, false);
         }
 
-        ArrayList<ArrayList<Method>> m = cache.get(Arrays.hashCode(args));
+        List<List<Method>> m = cache.get(Arrays.hashCode(args));
 
         callFromCache(m.get(0), objects);
         Object toReturn = callFromCache(m.get(1), objects);
@@ -157,7 +157,7 @@ public class Dispatcher {
         return new AbstractMap.SimpleEntry<>(toReturn, true);
     }
 
-    private static void addToCache(Class[] args, ArrayList<Method> called, Type type) {
+    private static void addToCache(Class[] args, List<Method> called, Type type) {
         switch (type) {
             case BEFORE:
                 initCache(args);
@@ -174,31 +174,25 @@ public class Dispatcher {
         }
     }
 
-    private static void callMethods(Class c, List<Class[]> orderedParams, Class[] arguments, Object [] objects, Type type)  {
-        ArrayList<Method> called = new ArrayList<>();
-        for(Class[] params : orderedParams) {
+    private static void callMethods(List<Method> methods, Class[] arguments, Object [] objects, Type type)  {
+        for(Method method : methods) {
             try {
-                Method method = c.getDeclaredMethod(c.getDeclaredMethods()[0].getName(), params); //FIXME
-                method.setAccessible(true);
                 method.invoke(null, objects);
-                called.add(method);
-            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            } catch (IllegalAccessException | InvocationTargetException e) {
                 e.printStackTrace();
             }
         }
-        addToCache(arguments, called, type);
+
+        addToCache(arguments, methods, type);
     }
 
-    private static Object callMethod(Class c, List<Class[]> orderedParams, Class[] arguments, Object [] objects, Type type){
-        ArrayList<Method> called = new ArrayList<>();
-
+    private static Object callMethod(List<Method> methods, Class[] arguments, Object [] objects, Type type){
         try {
-            Method method = c.getDeclaredMethod(c.getDeclaredMethods()[0].getName(), orderedParams.get(0)); //FIXME
-            method.setAccessible(true);
-            called.add(method);
-            addToCache(arguments, called, type);
-            return method.invoke(null, objects);
-        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            ArrayList<Method> methods1 = new ArrayList<>();
+            methods1.add(methods.get(0));
+            addToCache(arguments, methods1, type);
+            return methods.get(0).invoke(null, objects);
+        } catch (IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();
         }
 
@@ -254,12 +248,29 @@ public class Dispatcher {
         return array;
     }
 
-    private static List<Class[]> sortArray(List<Class[]> array, Class[] objects) {
-        int n = array.size();
-        Class [] temp = null;
-        if(n == 0) {
-            return array;
+    private static List<Method> getMethods(Class klass, List<Class[]> toGetMethods) {
+        List<Method> toReturn = new ArrayList<>();
+        for (Class[] args : toGetMethods) {
+            try {
+                Method method = klass.getDeclaredMethod(klass.getDeclaredMethods()[0].getName(), args);
+                method.setAccessible(true);
+                toReturn.add(method);
+            } catch (NoSuchMethodException e) {
+                e.printStackTrace();
+            }
         }
+        return toReturn;
+    }
+
+    private static List<Method> sortArray(Class klass, List<Method> methods, Class[] objects) {
+
+        if(methods.size() == 0) {
+            return methods;
+        }
+
+        List<Class[]> array = getParametersArray(methods);
+        int n = array.size();
+        Class[] temp = null;
 
         try {
             for (int k = (array.get(0).length - 1); k >= 0; k--) {
@@ -282,6 +293,6 @@ public class Dispatcher {
             e.printStackTrace();
         }
 
-        return sortArray2(array, objects);
+        return getMethods(klass, sortArray2(array, objects));
     }
 }

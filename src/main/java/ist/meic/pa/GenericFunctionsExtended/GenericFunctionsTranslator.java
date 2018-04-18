@@ -1,5 +1,6 @@
 package ist.meic.pa.GenericFunctionsExtended;
 
+import ist.meic.pa.GenericFunctions.GenericFunction;
 import javassist.*;
 import javassist.expr.ExprEditor;
 import javassist.expr.MethodCall;
