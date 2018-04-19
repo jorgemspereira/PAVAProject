@@ -3,6 +3,7 @@ package ist.meic.pa.GenericFunctionsExtended;
 import ist.meic.pa.GenericFunctions.AfterMethod;
 import ist.meic.pa.GenericFunctions.BeforeMethod;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -20,9 +21,14 @@ public class Dispatcher {
     public static Object dispatch(Object [] objects, String className) {
 
         Object toReturn =  null;
-
         try {
             Class invokableClass = Class.forName(className);
+
+            Combination combination = (Combination)invokableClass.getAnnotation(Combination.class);
+            if(combination != null){
+                return handleCombinationClass(invokableClass, objects, combination);
+            }
+
             Class[] args = getClassesOfObjects(objects);
             Map.Entry<Object, Boolean> fromCache = verifyCache(args, objects);
 
@@ -30,9 +36,8 @@ public class Dispatcher {
                 return fromCache.getKey();
             }
 
-            Class[] arguments = getClassesOfObjects(objects);
-            List<Method> methods = getCallableMethods(invokableClass, arguments);
-            List<Method> orderedMethods = sortArray(invokableClass, methods, arguments);
+            List<Method> methods = getCallableMethods(invokableClass, args);
+            List<Method> orderedMethods = sortArray(invokableClass, methods, args);
 
             if (methods.size() != 0) {
                 handleBefore(invokableClass, objects);
@@ -43,6 +48,142 @@ public class Dispatcher {
             e.printStackTrace();
         }
 
+        return toReturn;
+    }
+
+
+    private static Object handleCombinationClass(Class c, Object[] objects, Combination combination){
+        CombinationOrder order = combination.order();
+        CombinationType type = combination.type();
+        Class[] args = getClassesOfObjects(objects);
+        List<Method> methods = getCallableMethods(c, args);
+
+        List<Method> orderedMethods = sortArray(c, methods, args);
+
+        if(order.equals(CombinationOrder.LEAST_TO_MOST)){
+            Collections.reverse(orderedMethods);
+        }
+        Object result = doCombinations(type, orderedMethods, objects);
+        return result;
+    }
+
+    private static Object doCombinations(CombinationType type, List<Method> orderedMethods, Object[] objects){
+        List<Object> results = invokeMethods(orderedMethods, objects);
+
+        /*System.out.println("[DO COMBINATIONS]");
+
+        for(int i = 0;i<orderedMethods.size();i++){
+            System.out.print("Method: ");
+            for(Class p : orderedMethods.get(i).getParameterTypes()){
+                System.out.print(p.getName());
+            }
+            System.out.println();
+            System.out.println("Result: " + results.get(i));
+        }*/
+
+        switch(type){
+            case AND:
+                return handleANDCombination(results);
+            case OR:
+                return handleORCombination(results);
+            case MAX:
+                return handleMAXCombination(results);
+            case MIN:
+                return handleMINCombination(results);
+            case LIST:
+                return handleLISTCombination(results);
+            case PLUS:
+                return handlePLUSCombination(results);
+            case NCONC:
+                return handleNCONCCombination(results); //FIXME see method
+            case PROGN:
+                return handlePROGNCombination(results); //Return last element
+            case APPEND:
+                return handleAPPENDCombination(results); //FIXME see method
+        }
+        return null;
+    }
+
+    private static Object handleNCONCCombination(List<Object> results){
+        // FIXME I think NCONC and APPEND ARE THE SAME
+        // Do not think it makes sense in implementing it in Java
+        return null;
+    }
+
+    private static Object handleAPPENDCombination(List<Object> results){
+        // FIXME I think NCONC and APPEND ARE THE SAME
+        // Do not think it makes sense in implementing it in Java
+        return null;
+    }
+
+    private static Object handlePROGNCombination(List<Object> results){
+        return results.get(results.size()-1);
+    }
+
+    private static Object handleLISTCombination(List<Object> results){
+        return Arrays.toString(results.toArray());
+    }
+
+    private static Object handlePLUSCombination(List<Object> results){
+        Integer result = 0;
+        for(Object r: results){
+            result += (Integer)r;
+        }
+        return result;
+    }
+
+    private static Object handleMAXCombination(List<Object> results){
+        Integer max = 0;
+        for(Object r: results){
+           if((Integer)r > max){
+                max = (Integer)r;
+           }
+        }
+        return max;
+    }
+
+    private static Object handleMINCombination(List<Object> results){
+        Integer min = Integer.MAX_VALUE;
+        for(Object r: results){
+            if((Integer)r < min){
+                min = (Integer)r;
+            }
+        }
+        return min;
+    }
+
+    private static Object handleANDCombination(List<Object> results){
+        for(int i = 1; i<results.size()-1;i++){
+            if(results.get(i) != results.get(i+1))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static Object handleORCombination(List<Object> results){
+        for(int i = 0; i<results.size();i++){
+            if(results.get(i).equals(true))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static List<Object> invokeMethods(List<Method> orderedMethods, Object[] objects){
+        List<Object> toReturn = new ArrayList<>();
+        for(Method m: orderedMethods){
+            m.setAccessible(true);
+            try {
+                toReturn.add(m.invoke(null, objects));
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            } catch (InvocationTargetException e) {
+                e.printStackTrace();
+            }
+        }
         return toReturn;
     }
 
