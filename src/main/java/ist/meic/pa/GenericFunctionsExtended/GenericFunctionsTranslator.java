@@ -15,7 +15,6 @@ public class GenericFunctionsTranslator implements Translator {
 
     @Override
     public void onLoad(ClassPool pool, String classname) throws NotFoundException {
-        System.out.println("Classname: " + classname);
         CtClass ctClass = pool.get(classname);
         handleClass(ctClass);
     }
@@ -31,25 +30,16 @@ public class GenericFunctionsTranslator implements Translator {
                                     CtClass declaringClass = method.getDeclaringClass();
                                     if (declaringClass.hasAnnotation(GenericFunction.class) || declaringClass.hasAnnotation(Combination.class)) {
                                         String packageName = this.getClass().getPackage().getName();
-                                        m.replace("{ $_ = ($r)"+packageName+".Dispatcher.dispatch($args, \"" + m.getClassName() + "\"" + "); }");
+                                        m.replace("{ $_ = ($r)" + packageName + ".Dispatcher.dispatch($args, \"" + m.getClassName() + "\"" + "); }");
                                     }
                                 } catch (NotFoundException e) {
-                                    e.printStackTrace();
+                                     e.printStackTrace();
                                 }
                             }
                         });
             } catch (CannotCompileException e) {
                 e.printStackTrace();
             }
-        }
-        try {
-            cc.writeFile();
-        } catch (NotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (CannotCompileException e) {
-            e.printStackTrace();
         }
     }
 }

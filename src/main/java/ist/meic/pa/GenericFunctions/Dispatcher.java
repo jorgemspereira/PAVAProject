@@ -128,24 +128,39 @@ public class Dispatcher {
 
     private static int indexOf(Class [] objects, Class object)
     {
-        for(int i = 0;i<objects.length;i++)
-        {
-            if(object.getName().equals(objects[i].getName()))
-            {
+        for(int i = 0;i<objects.length;i++) {
+            if(object.getName().equals(objects[i].getName())) {
                 return i;
             }
         }
         return -1;
     }
 
-    private static List<Class[]> sortArray2(List<Class[]> array, Class[] objects)  {
+    private static List<Method> getMethods(Class klass, List<Class[]> toGetMethods) {
+        List<Method> toReturn = new ArrayList<>();
+        for (Class[] args : toGetMethods) {
+            try {
+                Method method = klass.getDeclaredMethod(klass.getDeclaredMethods()[0].getName(), args);
+                method.setAccessible(true);
+                toReturn.add(method);
+            } catch (NoSuchMethodException e) {
+                e.printStackTrace();
+            }
+        }
+        return toReturn;
+    }
 
+    private static List<Class[]> sortArray2(List<Class[]> array, Class[] objects) {
         int n = array.size();
+
         Class [] temp = null;
+
+        boolean swapped;
 
         try {
             for (int k = (array.get(0).length - 1); k >= 0; k--) {
                 for (int i = 0; i < n - 1; i++) {
+                    swapped = false;
                     for (int j = 0; j < (n - i - 1); j++) {
                         Class[] interfaces = objects[k].getInterfaces();
 
@@ -164,7 +179,12 @@ public class Dispatcher {
                             temp = array.get(j);
                             array.set(j, array.get(j + 1));
                             array.set(j + 1, temp);
+                            swapped = true;
                         }
+                    }
+
+                    if(!swapped) {
+                        break;
                     }
                 }
             }
@@ -173,20 +193,6 @@ public class Dispatcher {
         }
 
         return array;
-    }
-
-    private static List<Method> getMethods(Class klass, List<Class[]> toGetMethods) {
-        List<Method> toReturn = new ArrayList<>();
-        for (Class[] args : toGetMethods) {
-            try {
-                Method method = klass.getDeclaredMethod(klass.getDeclaredMethods()[0].getName(), args);
-                method.setAccessible(true);
-                toReturn.add(method);
-            } catch (NoSuchMethodException e) {
-                e.printStackTrace();
-            }
-        }
-        return toReturn;
     }
 
     private static List<Method> sortArray(Class klass, List<Method> methods, Class[] objects) {
@@ -198,10 +204,12 @@ public class Dispatcher {
         List<Class[]> array = getParametersArray(methods);
         int n = array.size();
         Class[] temp = null;
-
+        boolean swapped;
         try {
             for (int k = (array.get(0).length - 1); k >= 0; k--) {
                 for (int i = 0; i < n - 1; i++) {
+
+                    swapped = false;
                     for (int j = 0; j < (n - i - 1); j++) {
                         Class c1 = Class.forName(array.get(j + 1)[k].getName());
                         Class c2 = Class.forName(array.get(j)[k].getName());
@@ -211,8 +219,13 @@ public class Dispatcher {
                             temp = array.get(j);
                             array.set(j, array.get(j + 1));
                             array.set(j + 1, temp);
+                            swapped = true;
                         }
 
+                    }
+
+                    if (!swapped) {
+                        break;
                     }
                 }
             }

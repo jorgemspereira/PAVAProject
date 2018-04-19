@@ -5,9 +5,6 @@ public enum CombinationType{
     AND,
     OR,
     LIST,
-    APPEND,
-    NCONC, // FIXME
-    PROGN, // FIXME
     MIN,
     MAX
 }

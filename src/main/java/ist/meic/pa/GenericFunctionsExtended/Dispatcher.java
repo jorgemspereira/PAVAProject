@@ -94,30 +94,8 @@ public class Dispatcher {
                 return handleLISTCombination(results);
             case PLUS:
                 return handlePLUSCombination(results);
-            case NCONC:
-                return handleNCONCCombination(results); //FIXME see method
-            case PROGN:
-                return handlePROGNCombination(results); //Return last element
-            case APPEND:
-                return handleAPPENDCombination(results); //FIXME see method
         }
         return null;
-    }
-
-    private static Object handleNCONCCombination(List<Object> results){
-        // FIXME I think NCONC and APPEND ARE THE SAME
-        // Do not think it makes sense in implementing it in Java
-        return null;
-    }
-
-    private static Object handleAPPENDCombination(List<Object> results){
-        // FIXME I think NCONC and APPEND ARE THE SAME
-        // Do not think it makes sense in implementing it in Java
-        return null;
-    }
-
-    private static Object handlePROGNCombination(List<Object> results){
-        return results.get(results.size()-1);
     }
 
     private static Object handleLISTCombination(List<Object> results){
@@ -125,37 +103,36 @@ public class Dispatcher {
     }
 
     private static Object handlePLUSCombination(List<Object> results){
-        Integer result = 0;
+        Double result = 0.0;
         for(Object r: results){
-            result += (Integer)r;
+            result += ((Number) r).doubleValue();
         }
         return result;
     }
 
     private static Object handleMAXCombination(List<Object> results){
-        Integer max = 0;
+        Double max = 0.0;
         for(Object r: results){
-           if((Integer)r > max){
-                max = (Integer)r;
+           if(((Number)r).doubleValue() > max){
+                max = ((Number)r).doubleValue();
            }
         }
         return max;
     }
 
     private static Object handleMINCombination(List<Object> results){
-        Integer min = Integer.MAX_VALUE;
+        Double min = Double.MAX_VALUE;
         for(Object r: results){
-            if((Integer)r < min){
-                min = (Integer)r;
+            if(((Number)r).doubleValue() < min){
+                min = ((Number)r).doubleValue();
             }
         }
         return min;
     }
 
     private static Object handleANDCombination(List<Object> results){
-        for(int i = 1; i<results.size()-1;i++){
-            if(results.get(i) != results.get(i+1))
-            {
+        for (Object result : results) {
+            if (result.equals(false)) {
                 return false;
             }
         }
@@ -163,9 +140,8 @@ public class Dispatcher {
     }
 
     private static Object handleORCombination(List<Object> results){
-        for(int i = 0; i<results.size();i++){
-            if(results.get(i).equals(true))
-            {
+        for (Object result : results) {
+            if (result.equals(true)) {
                 return true;
             }
         }
@@ -175,12 +151,10 @@ public class Dispatcher {
     private static List<Object> invokeMethods(List<Method> orderedMethods, Object[] objects){
         List<Object> toReturn = new ArrayList<>();
         for(Method m: orderedMethods){
-            m.setAccessible(true);
             try {
+                m.setAccessible(true);
                 toReturn.add(m.invoke(null, objects));
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            } catch (InvocationTargetException e) {
+            } catch (IllegalAccessException | InvocationTargetException e) {
                 e.printStackTrace();
             }
         }
@@ -340,26 +314,42 @@ public class Dispatcher {
         return null;
     }
 
-    private static int indexOf(Class [] objects, Class object)
-    {
-        for(int i = 0;i<objects.length;i++)
-        {
-            if(object.getName().equals(objects[i].getName()))
-            {
+    private static int indexOf(Class [] objects, Class object) {
+        for(int i = 0;i<objects.length;i++) {
+            if(object.getName().equals(objects[i].getName())) {
                 return i;
             }
         }
         return -1;
     }
 
+
+    private static List<Method> getMethods(Class klass, List<Class[]> toGetMethods) {
+        List<Method> toReturn = new ArrayList<>();
+        for (Class[] args : toGetMethods) {
+            try {
+                Method method = klass.getDeclaredMethod(klass.getDeclaredMethods()[0].getName(), args);
+                method.setAccessible(true);
+                toReturn.add(method);
+            } catch (NoSuchMethodException e) {
+                e.printStackTrace();
+            }
+        }
+        return toReturn;
+    }
+
+
     private static List<Class[]> sortArray2(List<Class[]> array, Class[] objects) {
         int n = array.size();
 
         Class [] temp = null;
 
+        boolean swapped;
+
         try {
             for (int k = (array.get(0).length - 1); k >= 0; k--) {
                 for (int i = 0; i < n - 1; i++) {
+                    swapped = false;
                     for (int j = 0; j < (n - i - 1); j++) {
                         Class[] interfaces = objects[k].getInterfaces();
 
@@ -378,7 +368,12 @@ public class Dispatcher {
                             temp = array.get(j);
                             array.set(j, array.get(j + 1));
                             array.set(j + 1, temp);
+                            swapped = true;
                         }
+                    }
+
+                    if(!swapped) {
+                        break;
                     }
                 }
             }
@@ -387,20 +382,6 @@ public class Dispatcher {
         }
 
         return array;
-    }
-
-    private static List<Method> getMethods(Class klass, List<Class[]> toGetMethods) {
-        List<Method> toReturn = new ArrayList<>();
-        for (Class[] args : toGetMethods) {
-            try {
-                Method method = klass.getDeclaredMethod(klass.getDeclaredMethods()[0].getName(), args);
-                method.setAccessible(true);
-                toReturn.add(method);
-            } catch (NoSuchMethodException e) {
-                e.printStackTrace();
-            }
-        }
-        return toReturn;
     }
 
     private static List<Method> sortArray(Class klass, List<Method> methods, Class[] objects) {
@@ -412,10 +393,12 @@ public class Dispatcher {
         List<Class[]> array = getParametersArray(methods);
         int n = array.size();
         Class[] temp = null;
-
+        boolean swapped;
         try {
             for (int k = (array.get(0).length - 1); k >= 0; k--) {
                 for (int i = 0; i < n - 1; i++) {
+
+                    swapped = false;
                     for (int j = 0; j < (n - i - 1); j++) {
                         Class c1 = Class.forName(array.get(j + 1)[k].getName());
                         Class c2 = Class.forName(array.get(j)[k].getName());
@@ -425,8 +408,13 @@ public class Dispatcher {
                             temp = array.get(j);
                             array.set(j, array.get(j + 1));
                             array.set(j + 1, temp);
+                            swapped = true;
                         }
 
+                    }
+
+                    if (!swapped) {
+                        break;
                     }
                 }
             }
