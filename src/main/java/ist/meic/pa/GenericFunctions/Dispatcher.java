@@ -26,14 +26,14 @@ public class Dispatcher {
     }
 
     protected static Class getClassFromName(String name) {
-        Class klass = null;
+        Class c = null;
         try {
-            klass = Class.forName(name);
+            c = Class.forName(name);
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
             System.exit(-1);
         }
-        return klass;
+        return c;
     }
 
     protected static Class[] getClassesOfObjects(Object[] objects) {
@@ -138,12 +138,12 @@ public class Dispatcher {
         return -1;
     }
 
-    private static List<Method> getMethods(Class klass, List<Class[]> toGetMethods) {
+    private static List<Method> getMethods(Class c, List<Class[]> toGetMethods) {
         List<Method> toReturn = new ArrayList<>();
-        String name = klass.getDeclaredMethods()[0].getName();
+        String name = c.getDeclaredMethods()[0].getName();
         for (Class[] args : toGetMethods) {
             try {
-                Method method = klass.getDeclaredMethod(name, args);
+                Method method = c.getDeclaredMethod(name, args);
                 method.setAccessible(true);
                 toReturn.add(method);
             } catch (NoSuchMethodException e) {
@@ -193,7 +193,7 @@ public class Dispatcher {
         return array;
     }
 
-    protected static List<Method> sortArray(Class klass, List<Method> methods, Class[] objects) {
+    protected static List<Method> sortArray(Class c, List<Method> methods, Class[] objects) {
 
         if(methods.size() == 0) {
             return methods;
@@ -227,6 +227,6 @@ public class Dispatcher {
             }
         }
 
-        return getMethods(klass, sortByInterfaces(array, objects));
+        return getMethods(c, sortByInterfaces(array, objects));
     }
 }
