@@ -1,3 +1,5 @@
+package Tests;
+
 import ist.meic.pa.GenericFunctionsExtended.*;
 
 import static ist.meic.pa.GenericFunctionsExtended.CombinationOrder.MOST_TO_LEAST;
