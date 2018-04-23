@@ -15,7 +15,7 @@ plugins {
 }
 
 // Define the main class for the application
-mainClassName = 'ist.meic.pa.GenericFunctionsExtended.WithGenericFunctions'
+mainClassName = 'ist.meic.pa.GenericFunctions.WithGenericFunctions'
 
 dependencies {
     // This dependency is found on compile classpath of this component and consumers.
@@ -47,7 +47,7 @@ run {
     // standardOutput = new FileOutputStream('app.out')
 
     // If Arguments are static
-    args = ["TestCombinationMAXMain"]
+    args = ["TestH"]
 
     // Pass args when running in console: gradle run -PappArgs="['arg1','arg2']"
     if (project.hasProperty("appArgs")) {

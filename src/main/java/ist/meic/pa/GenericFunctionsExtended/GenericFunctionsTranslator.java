@@ -30,7 +30,7 @@ public class GenericFunctionsTranslator implements Translator {
                                     CtClass declaringClass = method.getDeclaringClass();
                                     if (declaringClass.hasAnnotation(GenericFunction.class) || declaringClass.hasAnnotation(Combination.class)) {
                                         String packageName = this.getClass().getPackage().getName();
-                                        m.replace("{ $_ = ($r)" + packageName + ".Dispatcher.dispatch($args, \"" + m.getClassName() + "\"" + "); }");
+                                        m.replace("{ $_ = ($r)" + packageName + ".DispatcherExtended.dispatch($args, \"" + m.getClassName() + "\"" + "); }");
                                     }
                                 } catch (NotFoundException e) {
                                      e.printStackTrace();

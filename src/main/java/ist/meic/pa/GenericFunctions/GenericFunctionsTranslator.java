@@ -28,7 +28,7 @@ public class GenericFunctionsTranslator implements Translator {
 
                                     if (declaringClass.hasAnnotation(GenericFunction.class)) {
                                         String packageName = this.getClass().getPackage().getName();
-                                        m.replace("{ $_ = ($r)"+packageName+".Dispatcher.dispatch($args, \"" + m.getClassName() + "\"" + "); }");
+                                        m.replace("{ $_ = ($r)" + packageName + ".Dispatcher.dispatch($args, \"" + m.getClassName() + "\"" + "); }");
                                     }
                                 } catch (NotFoundException e) {
                                     e.printStackTrace();

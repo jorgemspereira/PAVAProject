@@ -32,7 +32,7 @@ public class Dispatcher {
         return toReturn;
     }
 
-    private static Class[] getClassesOfObjects(Object[] objects) {
+    protected static Class[] getClassesOfObjects(Object[] objects) {
         List<Class> classes = new ArrayList<>();
         for(Object o : objects) {
             classes.add(o.getClass());
@@ -63,7 +63,7 @@ public class Dispatcher {
         return true;
     }
 
-    private static List<Method> getCallableMethods(Class c, Class[] args) {
+    protected static List<Method> getCallableMethods(Class c, Class[] args) {
         List<Method> toReturn = new ArrayList<>();
         for (Method m : c.getDeclaredMethods()) {
             if (m.getAnnotation(BeforeMethod.class) == null && m.getAnnotation(AfterMethod.class) == null) {
@@ -75,7 +75,7 @@ public class Dispatcher {
         return toReturn;
     }
 
-    private static List<Method> getAnnotatedCallableMethods(Class c, Class[] args, Class annotation) {
+    protected static List<Method> getAnnotatedCallableMethods(Class c, Class[] args, Class annotation) {
         List<Method> toReturn = new ArrayList<>();
         for (Method m : c.getDeclaredMethods()) {
             if (m.getAnnotation(annotation) != null) {
@@ -122,13 +122,11 @@ public class Dispatcher {
         } catch (IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();
         }
-
         return null;
     }
 
-    private static int indexOf(Class [] objects, Class object)
-    {
-        for(int i = 0;i<objects.length;i++) {
+    private static int indexOf(Class [] objects, Class object) {
+        for(int i = 0;i < objects.length; i++) {
             if(object.getName().equals(objects[i].getName())) {
                 return i;
             }
@@ -138,9 +136,10 @@ public class Dispatcher {
 
     private static List<Method> getMethods(Class klass, List<Class[]> toGetMethods) {
         List<Method> toReturn = new ArrayList<>();
+        String name = klass.getDeclaredMethods()[0].getName();
         for (Class[] args : toGetMethods) {
             try {
-                Method method = klass.getDeclaredMethod(klass.getDeclaredMethods()[0].getName(), args);
+                Method method = klass.getDeclaredMethod(name, args);
                 method.setAccessible(true);
                 toReturn.add(method);
             } catch (NoSuchMethodException e) {
@@ -150,89 +149,79 @@ public class Dispatcher {
         return toReturn;
     }
 
-    private static List<Class[]> sortArray2(List<Class[]> array, Class[] objects) {
+    private static List<Class[]> sortByInterfaces(List<Class[]> array, Class[] objects) {
+        Class [] temp;
+        boolean swapped;
         int n = array.size();
 
-        Class [] temp = null;
+        for (int k = (array.get(0).length - 1); k >= 0; k--) {
+            for (int i = 0; i < n - 1; i++) {
 
-        boolean swapped;
+                swapped = false;
+                for (int j = 0; j < (n - i - 1); j++) {
+                    Class[] interfaces = objects[k].getInterfaces();
 
-        try {
-            for (int k = (array.get(0).length - 1); k >= 0; k--) {
-                for (int i = 0; i < n - 1; i++) {
-                    swapped = false;
-                    for (int j = 0; j < (n - i - 1); j++) {
-                        Class[] interfaces = objects[k].getInterfaces();
+                    Class c1 = array.get(j + 1)[k];
+                    Class c2 = array.get(j)[k];
 
-                        Class c1 = Class.forName(array.get(j + 1)[k].getName());
-                        Class c2 = Class.forName(array.get(j)[k].getName());
+                    int c1Index = indexOf(interfaces, c1);
+                    int c2Index = indexOf(interfaces, c2);
 
-                        int c1Index = indexOf(interfaces, c1);
-                        int c2Index = indexOf(interfaces, c2);
-
-                        if (c1Index == -1 || c2Index == -1) {
-                            continue;
-                        }
-
-                        if (c1Index < c2Index) {
-                            // Swap
-                            temp = array.get(j);
-                            array.set(j, array.get(j + 1));
-                            array.set(j + 1, temp);
-                            swapped = true;
-                        }
+                    if (c1Index == -1 || c2Index == -1) {
+                        continue;
                     }
 
-                    if(!swapped) {
-                        break;
+                    if (c1Index < c2Index) {
+                        temp = array.get(j);
+                        array.set(j, array.get(j + 1));
+                        array.set(j + 1, temp);
+                        swapped = true;
                     }
                 }
+
+                if(!swapped) {
+                    break;
+                }
             }
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
         }
 
         return array;
     }
 
-    private static List<Method> sortArray(Class klass, List<Method> methods, Class[] objects) {
+    protected static List<Method> sortArray(Class klass, List<Method> methods, Class[] objects) {
 
         if(methods.size() == 0) {
             return methods;
         }
 
         List<Class[]> array = getParametersArray(methods);
-        int n = array.size();
-        Class[] temp = null;
+
+        Class[] temp;
         boolean swapped;
-        try {
-            for (int k = (array.get(0).length - 1); k >= 0; k--) {
-                for (int i = 0; i < n - 1; i++) {
+        int n = array.size();
 
-                    swapped = false;
-                    for (int j = 0; j < (n - i - 1); j++) {
-                        Class c1 = Class.forName(array.get(j + 1)[k].getName());
-                        Class c2 = Class.forName(array.get(j)[k].getName());
+        for (int k = (array.get(0).length - 1); k >= 0; k--) {
+            for (int i = 0; i < n - 1; i++) {
 
-                        if (!c1.isAssignableFrom(c2)) {
-                            // Swap
-                            temp = array.get(j);
-                            array.set(j, array.get(j + 1));
-                            array.set(j + 1, temp);
-                            swapped = true;
-                        }
+                swapped = false;
+                for (int j = 0; j < (n - i - 1); j++) {
+                    Class c1 = array.get(j + 1)[k];
+                    Class c2 = array.get(j)[k];
 
-                    }
-
-                    if (!swapped) {
-                        break;
+                    if (!c1.isAssignableFrom(c2)) {
+                        temp = array.get(j);
+                        array.set(j, array.get(j + 1));
+                        array.set(j + 1, temp);
+                        swapped = true;
                     }
                 }
+
+                if (!swapped) {
+                    break;
+                }
             }
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
         }
 
-        return getMethods(klass, sortArray2(array, objects));
+        return getMethods(klass, sortByInterfaces(array, objects));
     }
 }
