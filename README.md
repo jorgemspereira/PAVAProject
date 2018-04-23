@@ -1,6 +1,5 @@
-# Advanced Programming - First Project
-#### Group 04
-\
+# Advanced Programming - First Project - Group 04
+
 To execute the project you will need JDK8, since we are having some problems when run it with JDK9. If you have gradle installed you only need to run:
 
 ```sh
@@ -16,7 +15,7 @@ If you don't like gradle, you can always run it using:
 $ java -cp ./genericFunctions.jar:./javassist.jar:. ist.meic.pa.GenericFunctions.WithGenericFunctions MainClass
 ```
 
-### Extensions
+## Extensions
 
 Our extensions consists in:
 1. Caching of effective methods;
@@ -37,5 +36,5 @@ To run it with java you only need the command bellow (instead of the previous co
 $ java -cp ./genericFunctions.jar:./javassist.jar:. ist.meic.pa.GenericFunctionsExtended.WithGenericFunctions MainClass
 ```
 
-### Tests
+## Tests
 We have some tests for the extensions in the package *"Tests"*. For example, you can run the *Test.TestCacheMain* with the extended version and with the non extended version and compare the execution time. You can also check how to use other method combinations with for example the *Test.TestCombinationMAXMain* test.
