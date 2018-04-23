@@ -15,7 +15,8 @@ public class DispatcherExtended extends Dispatcher {
     private enum Type {
         BEFORE,
         MAIN,
-        AFTER
+        AFTER,
+        COMBINATION
     }
 
     public static Object dispatch(Object [] objects, String className) {
@@ -66,6 +67,14 @@ public class DispatcherExtended extends Dispatcher {
         return new AbstractMap.SimpleEntry<>(toReturn, true);
     }
 
+    private static Map.Entry<List<Method>, Boolean> verifyCacheForCombinations(Class[] args) {
+        List<List<Method>> m = cache.get(Arrays.hashCode(args));
+        if(m == null) {
+            return new AbstractMap.SimpleEntry<>(null, false);
+        }
+        return new AbstractMap.SimpleEntry<>(m.get(3), true);
+    }
+
     private static Object callFromCache(List<Method> methods, Object[] objects) {
         Object toReturn = null;
         for(Method method : methods) {
@@ -81,6 +90,7 @@ public class DispatcherExtended extends Dispatcher {
     private static void initCache(Class[] args) {
         if (cache.get(Arrays.hashCode(args)) == null) {
             List<List<Method>> m = new ArrayList<>();
+            m.add(new ArrayList<>());
             m.add(new ArrayList<>());
             m.add(new ArrayList<>());
             m.add(new ArrayList<>());
@@ -102,6 +112,10 @@ public class DispatcherExtended extends Dispatcher {
                 initCache(args);
                 cache.get(Arrays.hashCode(args)).get(2).addAll(called);
                 break;
+            case COMBINATION:
+                initCache(args);
+                cache.get(Arrays.hashCode(args)).get(3).addAll(called);
+                break;
         }
     }
 
@@ -112,8 +126,16 @@ public class DispatcherExtended extends Dispatcher {
         CombinationType type = combination.type();
         Class[] args = getClassesOfObjects(objects);
 
-        List<Method> methods = getCallableMethods(c, args);
-        List<Method> orderedMethods = sortArray(c, methods, args);
+        Map.Entry<List<Method>, Boolean> fromCache = verifyCacheForCombinations(args);
+        List<Method> orderedMethods;
+
+        if(fromCache.getValue()) {
+            orderedMethods = fromCache.getKey();
+        } else {
+            List<Method> methods = getCallableMethods(c, args);
+            orderedMethods = sortArray(c, methods, args);
+            addToCache(args, orderedMethods, Type.COMBINATION);
+        }
 
         if(order.equals(CombinationOrder.LEAST_TO_MOST)){
             Collections.reverse(orderedMethods);
