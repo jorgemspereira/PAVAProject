@@ -9,6 +9,6 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface Combination {
     CombinationType type();
-    CombinationOrder order() default CombinationOrder.LEAST_TO_MOST;
+    CombinationOrder order() default CombinationOrder.MOST_TO_LEAST;
 }
 

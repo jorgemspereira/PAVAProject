@@ -159,11 +159,12 @@ public class Dispatcher {
         int n = array.size();
 
         for (int k = (array.get(0).length - 1); k >= 0; k--) {
+            Class[] interfaces = objects[k].getInterfaces();
+
             for (int i = 0; i < n - 1; i++) {
 
                 swapped = false;
                 for (int j = 0; j < (n - i - 1); j++) {
-                    Class[] interfaces = objects[k].getInterfaces();
 
                     Class c1 = array.get(j + 1)[k];
                     Class c2 = array.get(j)[k];
