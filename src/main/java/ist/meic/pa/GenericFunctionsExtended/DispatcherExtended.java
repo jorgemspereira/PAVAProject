@@ -22,13 +22,13 @@ public class DispatcherExtended extends Dispatcher {
     public static Object dispatch(Object [] objects, String className) {
         Object toReturn =  null;
         Class invokableClass = getClassFromName(className);
+        Class[] args = getClassesOfObjects(objects);
 
         Combination combination = (Combination)invokableClass.getAnnotation(Combination.class);
         if(combination != null){
-            return handleCombinationClass(invokableClass, objects, combination);
+            return handleCombinationClass(invokableClass, args, objects, combination);
         }
 
-        Class[] args = getClassesOfObjects(objects);
         Map.Entry<Object, Boolean> fromCache = verifyCache(args, objects);
         if(fromCache.getValue()) {
             return fromCache.getKey();
@@ -115,10 +115,9 @@ public class DispatcherExtended extends Dispatcher {
 
     /******************** OTHER METHODS COMBINATION CODE *****************************/
 
-    private static Object handleCombinationClass(Class c, Object[] objects, Combination combination){
+    private static Object handleCombinationClass(Class c, Class[] args, Object[] objects, Combination combination){
         CombinationOrder order = combination.order();
         CombinationType type = combination.type();
-        Class[] args = getClassesOfObjects(objects);
 
         Map.Entry<List<Method>, Boolean> fromCache = verifyCacheForCombinations(args);
         List<Method> orderedMethods;
