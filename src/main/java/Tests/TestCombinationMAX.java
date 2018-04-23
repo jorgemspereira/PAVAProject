@@ -1,23 +1,22 @@
 package Tests;
 
-import ist.meic.pa.GenericFunctionsExtended.*;
+import ist.meic.pa.GenericFunctionsExtended.Combination;
 
 import static ist.meic.pa.GenericFunctionsExtended.CombinationOrder.MOST_TO_LEAST;
-import static ist.meic.pa.GenericFunctionsExtended.CombinationType.AND;
-import static ist.meic.pa.GenericFunctionsExtended.CombinationType.LIST;
+import static ist.meic.pa.GenericFunctionsExtended.CombinationType.MAX;
 
-@Combination(order=MOST_TO_LEAST, type=LIST)
+@Combination(order=MOST_TO_LEAST, type=MAX)
 public class TestCombinationMAX {
     public static Object combineMax(Integer b) {
-        return "Integer";
-    }
-    public static Object combineMax(Object b) {
-        return "Object";
+        return 3;
     }
     public static Object combineMax(Float b) {
-        return "Float";
+        return 4;
     }
     public static Object combineMax(Number b) {
-        return "Number";
+        return 1;
+    }
+    public static Object combineMax(Object b) {
+        return 2;
     }
 }
