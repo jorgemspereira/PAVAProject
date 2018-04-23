@@ -5,7 +5,7 @@ To execute the project you will need JDK8, since we are having some problems whe
 ```sh
 $ gradle run -PappArgs="['MainClass']"
 ```
-Where main class, is for the class where the main is declared, for example:
+Where main class, is the class where the main method is declared, for example:
 ```sh
 $ gradle run -PappArgs="['Test.TestCacheMain']"
 ```
@@ -31,6 +31,7 @@ mainClassName = 'ist.meic.pa.GenericFunctions.WithGenericFunctions'
 ```json
 mainClassName = 'ist.meic.pa.GenericFunctionsExtended.WithGenericFunctions'
 ```
+
 To run it with java you only need the command bellow (instead of the previous command):
 ```sh
 $ java -cp ./genericFunctions.jar:./javassist.jar:. ist.meic.pa.GenericFunctionsExtended.WithGenericFunctions MainClass
