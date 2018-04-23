@@ -19,7 +19,7 @@ $ java -cp ./genericFunctions.jar:./javassist.jar:. ist.meic.pa.GenericFunctions
 
 Our extensions consist of:
 1. Caching of effective methods;
-2. Other methods combination (e.g., LIST, AND, OR...);
+2. Other methods combination (LIST, AND, OR, PLUS, MAX, MIN);
 3. Caching the result of other methods combination.
 
 We use the *@GenericFunction*, *@After* and *@Before* annotations of the non-extended version. Therefore, if you want to run tests made for the non-extended version in the extended version, you **do not have to import** a different annotation.
