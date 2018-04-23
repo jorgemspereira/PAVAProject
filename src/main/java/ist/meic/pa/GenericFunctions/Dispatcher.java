@@ -9,27 +9,31 @@ import java.util.List;
 public class Dispatcher {
 
     public static Object dispatch(Object [] objects, String className) {
+        Object toReturn = null;
+        Class invokableClass = getClassFromName(className);
 
-        Object toReturn =  null;
+        Class[] arguments = getClassesOfObjects(objects);
+        List<Method> methods = getCallableMethods(invokableClass, arguments);
+        List<Method> orderedMethods = sortArray(invokableClass, methods, arguments);
 
-        try {
-            Class invokableClass = Class.forName(className);
-
-            Class[] arguments = getClassesOfObjects(objects);
-            List<Method> methods = getCallableMethods(invokableClass, arguments);
-            List<Method> orderedMethods = sortArray(invokableClass, methods, arguments);
-
-            if (methods.size() != 0) {
-                handleBefore(invokableClass, objects);
-                toReturn = handleMainMethods(orderedMethods, objects);
-                handleAfter(invokableClass, objects);
-            }
-
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+        if (methods.size() != 0) {
+            handleBefore(invokableClass, objects);
+            toReturn = handleMainMethods(orderedMethods, objects);
+            handleAfter(invokableClass, objects);
         }
 
         return toReturn;
+    }
+
+    protected static Class getClassFromName(String name) {
+        Class klass = null;
+        try {
+            klass = Class.forName(name);
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+            System.exit(-1);
+        }
+        return klass;
     }
 
     protected static Class[] getClassesOfObjects(Object[] objects) {

@@ -20,33 +20,27 @@ public class DispatcherExtended extends Dispatcher {
     }
 
     public static Object dispatch(Object [] objects, String className) {
-
         Object toReturn =  null;
-        try {
-            Class invokableClass = Class.forName(className);
+        Class invokableClass = getClassFromName(className);
 
-            Combination combination = (Combination)invokableClass.getAnnotation(Combination.class);
-            if(combination != null){
-                return handleCombinationClass(invokableClass, objects, combination);
-            }
+        Combination combination = (Combination)invokableClass.getAnnotation(Combination.class);
+        if(combination != null){
+            return handleCombinationClass(invokableClass, objects, combination);
+        }
 
-            Class[] args = getClassesOfObjects(objects);
-            Map.Entry<Object, Boolean> fromCache = verifyCache(args, objects);
-            if(fromCache.getValue()) {
-                return fromCache.getKey();
-            }
+        Class[] args = getClassesOfObjects(objects);
+        Map.Entry<Object, Boolean> fromCache = verifyCache(args, objects);
+        if(fromCache.getValue()) {
+            return fromCache.getKey();
+        }
 
-            List<Method> methods = getCallableMethods(invokableClass, args);
-            List<Method> orderedMethods = sortArray(invokableClass, methods, args);
+        List<Method> methods = getCallableMethods(invokableClass, args);
+        List<Method> orderedMethods = sortArray(invokableClass, methods, args);
 
-            if (methods.size() != 0) {
-                handleBefore(invokableClass, objects);
-                toReturn = handleMainMethods(orderedMethods, args, objects);
-                handleAfter(invokableClass, objects);
-            }
-
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+        if (methods.size() != 0) {
+            handleBefore(invokableClass, objects);
+            toReturn = handleMainMethods(orderedMethods, args, objects);
+            handleAfter(invokableClass, objects);
         }
 
         return toReturn;
