@@ -6,6 +6,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/*
+    Class that handles the invocation of methods
+ */
 public class Dispatcher {
 
     public static Object dispatch(Object [] objects, String className) {
@@ -153,6 +156,8 @@ public class Dispatcher {
         return toReturn;
     }
 
+    // Sort using bubble sort, ordering from right to left
+    // Used to sort by precedence list of interfaces
     private static List<Class[]> sortByInterfaces(List<Class[]> array, Class[] objects) {
         Class [] temp;
         boolean swapped;
@@ -193,6 +198,7 @@ public class Dispatcher {
         return array;
     }
 
+    // Sort using bubble sort, ordering from right to left
     protected static List<Method> sortArray(Class c, List<Method> methods, Class[] objects) {
 
         if(methods.size() == 0) {

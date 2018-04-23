@@ -8,10 +8,13 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 
+// Dispatcher used on the extended version, inheriting from non-extended Dispatcher
 public class DispatcherExtended extends Dispatcher {
 
+    // Caching of effective methods
     private static Map<Integer, List<List<Method>>> cache = new HashMap<>();
 
+    // Types of methods in the cache
     private enum Type {
         BEFORE,
         MAIN,
@@ -48,6 +51,7 @@ public class DispatcherExtended extends Dispatcher {
 
     /************************** CACHE RELATED CODE ***********************************/
 
+    // Verification and invocation, if cache contains method
     private static Map.Entry<Object, Boolean> verifyCache(Class[] args, Object[] objects) {
         List<List<Method>> m = cache.get(Arrays.hashCode(args));
         if(m == null) {
@@ -81,6 +85,7 @@ public class DispatcherExtended extends Dispatcher {
         return toReturn;
     }
 
+    // Initialization of cache, with an ArrayList for each type (Before, Main, After, Combination)
     private static void initCache(Class[] args) {
         if (cache.get(Arrays.hashCode(args)) == null) {
             List<List<Method>> m = new ArrayList<>();
@@ -239,6 +244,7 @@ public class DispatcherExtended extends Dispatcher {
         callMethods(orderedParams, arguments, objects, Type.AFTER);
     }
 
+    // Used in invoking before and after methods
     private static void callMethods(List<Method> methods, Class[] arguments, Object [] objects, Type type)  {
         for(Method method : methods) {
             try {
@@ -250,6 +256,7 @@ public class DispatcherExtended extends Dispatcher {
         addToCache(arguments, methods, type);
     }
 
+    // Used in invoking main methods
     private static Object callMethod(List<Method> methods, Class[] arguments, Object [] objects, Type type){
         try {
             ArrayList<Method> methods1 = new ArrayList<>();

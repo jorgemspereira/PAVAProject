@@ -13,10 +13,11 @@ public class GenericFunctionsTranslator implements Translator {
     @Override
     public void onLoad(ClassPool pool, String classname) throws NotFoundException {
         CtClass ctClass = pool.get(classname);
-        handleClass(ctClass);
+        replaceMethodCall(ctClass);
     }
 
-    private void handleClass(CtClass cc) {
+    // Interception of method call to give access to Dispatcher class
+    private void replaceMethodCall(CtClass cc) {
         for (CtMethod method : cc.getDeclaredMethods()) {
             try {
                 method.instrument(
