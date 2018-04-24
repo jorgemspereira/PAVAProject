@@ -15,7 +15,7 @@ plugins {
 }
 
 // Define the main class for the application
-mainClassName = 'ist.meic.pa.GenericFunctionsExtended.WithGenericFunctions'
+mainClassName = 'ist.meic.pa.GenericFunctions.WithGenericFunctions'
 
 dependencies {
     // https://mvnrepository.com/artifact/org.javassist/javassist

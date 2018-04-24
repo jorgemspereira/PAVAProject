@@ -7,12 +7,16 @@ $ gradle run -PappArgs="['MainClass']"
 ```
 Where *MainClass* is the class containing the declaration of the main method, for example:
 ```sh
-$ gradle run -PappArgs="['Test.TestCacheMain']"
+$ gradle run -PappArgs="['Tests.TestCacheMain']"
 ```
 
-If you do not like gradle, you can always run it using:
+If you do not like gradle, you can always run it using, on Linux:
 ```sh
-$ java -cp ./genericFunctions.jar:./javassist.jar:. ist.meic.pa.GenericFunctions.WithGenericFunctions MainClass
+$ java -cp ./build/libs/genericFunctions.jar:./javassist.jar:. ist.meic.pa.GenericFunctions.WithGenericFunctions MainClass
+```
+Or in Windows:
+```sh
+$ java -cp "build/libs/genericFunctions.jar;javassist.jar" ist.meic.pa.GenericFunctions.WithGenericFunctions MainClass
 ```
 
 ## Extensions
@@ -34,7 +38,7 @@ mainClassName = 'ist.meic.pa.GenericFunctionsExtended.WithGenericFunctions'
 
 To run it with java you only need the command bellow (instead of the previous command):
 ```sh
-$ java -cp ./genericFunctions.jar:./javassist.jar:. ist.meic.pa.GenericFunctionsExtended.WithGenericFunctions MainClass
+$ java -cp ./build/libs/genericFunctions.jar:./javassist.jar:. ist.meic.pa.GenericFunctionsExtended.WithGenericFunctions MainClass
 ```
 
 ## Tests

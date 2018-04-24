@@ -142,6 +142,8 @@ public class DispatcherExtended extends Dispatcher {
         return doCombinations(type, orderedMethods, objects);
     }
 
+    //Taking as assumption that the return type of the methods for the LIST is Object, 
+    //for AND/OR is Boolean and for MAX/MIN/PLUS needs to be a sub-class of Number
     private static Object doCombinations(CombinationType type, List<Method> orderedMethods, Object[] objects){
         List<Object> results = invokeMethods(orderedMethods, objects);
 
